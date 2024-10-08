@@ -1,0 +1,59 @@
+---
+title: "nlp"
+author: "Makini Makini"
+date: "2024-10-08"
+output: html_document
+---
+
+```{r}
+rm(list = ls())
+# set working directory
+setwd("~/MAKINI CODES/Machine Learning/Project book/natural language processing")
+# read the first 100 reviews
+reviews_text <- readLines("amazon_review_polarity_csv/amazon_review_polarity_csv/train.csv", n = 1000) 
+# convert text to data frame
+reviews_text <- data.frame(reviews_text)
+```
+
+```{r}
+  # EDA
+# separate the sentiment and the review text
+# post separation the first column will have the first 4 characters # second column will have the rest of the characters # first column should be named "Sentiment" # second column to be named "SentimentText"
+library(tidyr)
+reviews_text <- separate(data = reviews_text, col = reviews_text, into = c("Sentiment", "SentimentText"), sep = 4)
+# remove punctuation
+reviews_text$Sentiment <- gsub("[^[:alnum:] ]", "", reviews_text$Sentiment)
+# retain only alphanumeric in the text
+reviews_text$SentimentText <- gsub("[^[:alnum:] ]", " ", reviews_text$SentimentText)
+# replace multiple spaces with single space
+reviews_text$SentimentText <- gsub("(?<=[\\s])\\s*|^\\s+|\\s+$", "", reviews_text$SentimentText, perl=TRUE)
+# write output to a file
+write.table(reviews_text, file = "Sentimental Analysis Dataset.csv", row.names = F, col.names = T, sep = ",")
+```
+
+```{r}
+# convert to the fastText library
+reviews_text <- readLines("amazon_review_polarity_csv/amazon_review_polarity_csv/train.csv", n = 1000) 
+ # basic EDA
+print(class(reviews_text)) 
+print(length(reviews_text))
+# replace positive sentiment value 2 with _label_2
+reviews_text <- gsub("\\\"2\\\",","__label__2 ",reviews_text)
+# for 1
+reviews_text<-gsub("\\\"1\\\",","__label__1 ",reviews_text)
+# removing the unnecessary \" characters 
+reviews_text<-gsub("\\\""," ",reviews_text)
+# replace xple sapces with single space
+reviews_text<-gsub("(?<=[\\s])\\s*|^\\s+|\\s+$", "", reviews_text, perl=TRUE)
+# basic EDA post-processing
+print("EDA POST PROCESSING") 
+print(class(reviews_text)) 
+print(length(reviews_text)) 
+print(head(reviews_text,2)) 
+# writing the revamped file
+fileConn <- file("Sentimental Analysis Dataset_ft.txt")
+writeLines(reviews_text, fileConn)
+close(fileConn)
+```
+
+

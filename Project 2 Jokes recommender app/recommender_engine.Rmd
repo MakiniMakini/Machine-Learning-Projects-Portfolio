@@ -1,0 +1,41 @@
+---
+title: "jokes system"
+author: "Makini Makini"
+date: "2024-10-07"
+output: html_document
+---
+
+```{r}
+# exploratory data analysis (EDA)
+rm(list = ls())
+library(data.table)
+library(recommenderlab)
+set.seed(34)
+library(recommenderlab)
+data(Jester5k)
+str(Jester5k)
+# Viewing the first 5 records in the dataset 
+head(getRatingMatrix(Jester5k),5)
+# print summary
+print(summary(rowCounts(Jester5k)))
+# plot histogram
+hist(getRatingMatrix(Jester5k), main = "Distribution of ratings")
+# get the some jokes
+head(JesterJokes, 5)
+# for example get the best rated joke
+best <- which.max(colMeans(Jester5k))
+cat(JesterJokes[best])
+```
+
+```{r}
+# dividing the data frame to train and test
+Jester5k_es <- evaluationScheme(Jester5k, method = "split", train = 0.8, given = 20, goodRating = 0) 
+# verify 
+print(Jester5k_es)
+```
+
+```{r}
+# item-based collaborative filtering technique
+
+```
+

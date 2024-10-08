@@ -1,0 +1,92 @@
+---
+title: "employee_attrition"
+author: "Makini Makini"
+date: "2024-10-07"
+output: html_document
+---
+
+```{r}
+# set up and data understanding
+setwd("~/MAKINI CODES/Machine Learning/Project book/Project 1 Ensemble")
+rm(list = ls())
+library(rsample)
+#load the data
+attrition <- read.csv("WA_Fn-UseC_-HR-Employee-Attrition.csv")
+data(attrition)
+str(attrition)
+mydata <- attrition
+```
+
+```{r}
+# visualize the highly correlated variables in the data
+# numeric values
+numeric_mydata <- 
+  mydata[,c(1,4,6,7,10,11,13,14,15,17,19,20,21,24,25,26,28:35)]
+#convert yes/no into numeric
+mydata$Attrition <- as.factor(mydata$Attrition)
+numeric_attrition = as.numeric(mydata$Attrition)- 1
+# new column with numeric columns and numeric target
+numeric_mydata = cbind(numeric_mydata, numeric_attrition)
+# visualize the highly correlated variables in the data through the corrplot library
+library(corrplot)
+M <- cor(numeric_mydata)
+corrplot(M, method = "circle")
+```
+
+```{r}
+# plot overtime vs attrition
+library(ggplot2)
+l <- ggplot(mydata, aes(OverTime, fill = Attrition)) +
+  geom_histogram(stat = "count")
+tapply(as.numeric(mydata$Attrition) - 1, mydata$OverTime, mean)
+l
+
+# marital status vs attrition rate
+k <- ggplot(mydata, aes(MaritalStatus, fill = Attrition)) +
+  geom_bar(stat = "count")
+k
+tapply(as.numeric(mydata$Attrition) - 1 ,mydata$MaritalStatus,mean)
+
+###JobRole vs Attrition 
+l <- ggplot(mydata, aes(JobRole,fill = Attrition)) 
+l <- l + geom_histogram(stat="count") 
+l
+tapply(as.numeric(mydata$Attrition) - 1 ,mydata$JobRole,mean)
+
+###Gender vs Attrition 
+l <- ggplot(mydata, aes(Gender,fill = Attrition)) 
+l <- l + geom_histogram(stat="count") 
+l
+tapply(as.numeric(mydata$Attrition) - 1 ,mydata$Gender,mean)
+
+### x=Overtime, y= Age, z = MaritalStatus , t = Attrition 
+ggplot(mydata, aes(OverTime, Age)) + 
+  facet_grid(.~MaritalStatus) +
+  geom_jitter(aes(color = Attrition),alpha = 0.4) + 
+  ggtitle("x=Overtime, y= Age, z = MaritalStatus , t = Attrition") + 
+  theme_light()
+```
+
+```{r}
+# IMPLEMENTING KNN
+library(doSNOW)
+library(caret)
+mydata_2 <- mydata
+# remove the non-discriminatory features
+mydata_2$EmployeeNumber=mydata_2$Over18=mydata_2$EmployeeCount=mydata_2$StandardHours = NULL
+#set seed
+set.seed(10000)
+# set cv 10 times
+fitControl = trainControl(method = "repeatedcv", number = 10, repeats = 10)
+# first model
+caret_model = train(
+  Attrition ~ ., 
+  data = mydata_2, 
+  trControl = fitControl, 
+  method = "knn", 
+  tuneLength = 20)
+caret_model$finalModel
+# save model to disk
+saveRDS(caret_model, "production_model.rds")
+```
+

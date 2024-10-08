@@ -1,0 +1,80 @@
+---
+title: "bagging"
+author: "Makini Makini"
+date: "2024-10-07"
+output: html_document
+---
+```{r}
+# load libraries
+rm(list = ls())
+
+library(caret)
+set.seed(123)
+setwd("~/MAKINI CODES/Machine Learning/Project book/Project 1 Ensemble")
+# load the data
+attrition <- read.csv("WA_Fn-UseC_-HR-Employee-Attrition.csv")
+data(attrition)
+str(attrition)
+mydata <- attrition
+# remove non-discriminatory data
+mydata$EmployeeNumber=mydata$Over18=mydata$EmployeeCount=mydata$StandardHours = NULL
+# set up cross validation
+cvControl = trainControl(method = "repeatedcv", number = 10, repeats = 10)
+# train the data
+bag_model <- train(Attrition ~ ., data = mydata, method = "treebag", B = 10, trainControl = cvControl, importance = TRUE)
+bag_model
+```
+
+```{r}
+# Implementing SVM
+# set up the svm predic funstion
+svm.predict <- function(object, x) {
+  # Check if the model supports probability prediction
+  if (object$probability) {
+    # Predict probabilities
+    out <- attr(predict(object, as.matrix(x), probability = TRUE), "probabilities")
+  } else {
+    # Predict class labels (if classification) or values (if regression)
+    out <- predict(object, as.matrix(x))
+  }
+  out
+}
+# set up parameters to build svm bagging model
+bagctrl <- bagControl(
+  fit = svmBag$fit,
+  predict = svm.predict,
+  aggregate = svmBag$aggregate
+)
+# fit the model
+set.seed(123)
+svmbag <- train(
+  Attrition ~ .,
+  data = mydata,
+  method = "bag",
+  trControl = cvControl,
+  bagControl = bagctrl
+)
+svmbag
+```
+
+```{r}
+# Naive Bayes Bagging
+library(klaR)
+bagctrl <- bagControl(
+  fit = nbBag$fit,
+  predict = nbBag$pred,
+  aggregate = nbBag$aggregate
+)
+# fit the bagged nb model
+cvcontrol = trainControl(method = "repeatedcv", number = 10, repeats = 10)
+set.seed(123)
+nbbag <- train(
+  Attrition ~ .,
+  data = mydata,
+  method = "bag",
+  trControl = cvcontrol,
+  bagControl = bagctrl
+)
+nbbag
+```
+

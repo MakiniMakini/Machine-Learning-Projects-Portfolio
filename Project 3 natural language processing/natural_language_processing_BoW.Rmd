@@ -1,0 +1,69 @@
+---
+title: "BoW Approach"
+author: "Makini Makini"
+date: "2024-10-08"
+output: html_document
+---
+
+```{r}
+# load libraries
+library(SnowballC)
+library(tm)
+# set wdir
+setwd("~/MAKINI CODES/Machine Learning/Project book/natural language processing")
+# read the file as df
+text <- read.table(file = "Sentimental Analysis Dataset.csv", sep = ",", header = T)
+```
+
+```{r}
+# Processing
+# transforming the text into volatile corpus
+train_corp <- VCorpus(VectorSource(text$SentimentText))
+print(train_corp)
+```
+
+```{r}
+# Create a Document Term Matrix
+# change to lower, remove numbers and stop words and punctuation, perform stemming - resolving a word into the base form of the word, that is, strip the plural s from nouns, the ing from verbs, or other affixes.
+dtm_train <- DocumentTermMatrix(train_corp, control = list(
+  tolower = TRUE, removeNumbers = TRUE, stopwords = TRUE, removePunctuation = TRUE, stemming = TRUE
+))
+inspect(dtm_train)
+# remove the sparce terms - terms occurring only in very few documents
+dtm_train = removeSparseTerms(dtm_train, 0.99)
+# remove those terms that have at least a 99% of sparse elements
+inspect(dtm_train)
+```
+
+```{r}
+#SEPARATE train and test
+dtm_train_train <- dtm_train[1:800, ]
+dtm_train_test <- dtm_train[801:1000, ]
+dtm_train_train_lables <- as.factor(as.character(text[1:800, ]$Sentiment))
+dtm_train_test_lables <- as.factor(as.character(text[801:1000, ]$Sentiment))
+```
+
+```{r}
+# using naive bayes - nominal features
+# convert our cells into nominal
+cellconvert <- function(x){
+  x <- ifelse(x > 0, "Y", "N")
+}
+# apply the function in the rows
+dtm_train_train <- apply(dtm_train_train, MARGIN = 2, cellconvert)
+dtm_train_test <- apply(dtm_train_test, MARGIN = 2, cellconvert)
+
+# training the naive bayes classifier on the training dtm
+library(e1071)
+nb_senti_classifier = naiveBayes(dtm_train_train, dtm_train_train_lables)
+summary(nb_senti_classifier)
+# making predictions on the test data dtm
+nb_predicts <- predict(nb_senti_classifier, dtm_train_test, type = "class")
+print(nb_predicts)
+# computing accuracy of the model
+library(rminer)
+print(mmetric(nb_predicts, dtm_train_test_lables, c("ACC")))
+
+# We achieved a 79% accuracy just with a very quick and basic BoW model. The model can be further improved by means of techniques such as parameter tuning, lemmatization, new features creation, and so on.
+```
+

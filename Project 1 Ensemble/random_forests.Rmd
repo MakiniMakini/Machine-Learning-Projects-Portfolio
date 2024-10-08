@@ -1,0 +1,62 @@
+---
+title: "random forest"
+author: "Makini Makini"
+date: "2024-10-07"
+output: html_document
+---
+
+```{r}
+# load libraries
+rm(list = ls())
+library(caret)
+# load the data
+attrition <- read.csv("WA_Fn-UseC_-HR-Employee-Attrition.csv")
+data(attrition)
+str(attrition)
+mydata <- attrition
+# remove non-discriminatory data
+mydata$EmployeeNumber=mydata$Over18=mydata$EmployeeCount=mydata$StandardHours = NULL
+```
+
+```{r}
+set.seed(1234)
+
+# cross validation
+fitControl <- trainControl(method = "repeatedcv", number = 10, repeats = 10)
+# create model
+random_model_attrition <- train(
+  Attrition ~ .,
+  data = mydata,
+  method = "rf",
+  trControl = fitControl,
+  verbose = FALSE
+)
+random_model_attrition
+```
+
+```{r}
+# stacking\
+library(caretEnsemble)
+# set control parameters for cv
+control <- trainControl(method = "repeatedcv", number = 10, repeats = 10, savePredictions = TRUE, classProbs = TRUE)
+# create a list of the ML algorithms
+algorithm_list <- c('C5.0', 'nb', 'glm', 'knn', 'svmRadial')
+# create model
+set.seed(1234)
+# train model
+stacked_model <- caretList(
+  Attrition ~ .,
+  data = mydata,
+  trControl = control,
+  methodList = algorithm_list
+)
+# results
+results <- resamples(stacked_model)
+summary(results)
+# stacking the individual models
+stackControl <- trainControl(method="repeatedcv", number=10, repeats=10, savePredictions=TRUE, classProbs=TRUE)
+# using a linear model
+stack.glm <- caretStack(models, method="glm", trControl=stackControl)
+stack.glm
+```
+
